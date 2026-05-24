@@ -2210,6 +2210,19 @@
 }
 .btn-secondary svg { color: var(--final); }
 
+/* When secondary acts as an alternate primary action (e.g., NEW GAME under RESUME) */
+.btn-secondary-prom {
+  padding: 14px 26px;
+  font-size: 14px;
+  letter-spacing: 2px;
+  border-color: var(--border-light);
+  color: var(--text);
+}
+.btn-secondary-prom:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--text-dim);
+}
+
 /* ============================================================
    TUTORIAL
    ============================================================ */

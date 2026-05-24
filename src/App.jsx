@@ -128,6 +128,21 @@ function pickFastLabel() {
 
 const MUTED_KEY = 'wg.muted.v1';
 const TUTORIAL_SEEN_KEY = 'wg.tutorialSeen.v2';
+const SAVE_KEY = 'wg.save.v1';
+
+function loadSavedGame() {
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || data.version !== 1 || !data.current || !data.round) return null;
+    return data;
+  } catch { return null; }
+}
+function clearSavedGame() {
+  try { localStorage.removeItem(SAVE_KEY); } catch {}
+}
 
 /* ============== Audio (Web Audio API) ============== */
 
@@ -347,6 +362,7 @@ export default function App() {
     if (typeof localStorage === 'undefined') return false;
     return localStorage.getItem(MUTED_KEY) === '1';
   });
+  const [hasSavedGame, setHasSavedGame] = useState(() => !!loadSavedGame());
 
   const audioRef = useRef(null);
   if (!audioRef.current) audioRef.current = createAudioPlayer();
@@ -537,10 +553,48 @@ export default function App() {
 
   function startGame() {
     audioRef.current?.ensureCtx?.(); // unlock audio with the user gesture
+    clearSavedGame();
+    setHasSavedGame(false);
     resetGame();
     setScreen('playing');
     setInterstitial({ type: 'level', level: 0, pending: 1 });
     sfx('start');
+  }
+
+  function resumeGame() {
+    const data = loadSavedGame();
+    if (!data) {
+      setHasSavedGame(false);
+      return;
+    }
+    audioRef.current?.ensureCtx?.();
+    // Restore persisted game state.
+    setRound(data.round);
+    setScore(data.score);
+    setStreak(data.streak);
+    setResults(data.results || []);
+    setCurrent(data.current);
+    setGuess(data.guess);
+    setTimedOut(!!data.timedOut);
+    setSkipped(!!data.skipped);
+    setHintsLeft(data.hintsLeft ?? HINTS_PER_GAME);
+    setSkipsLeft(data.skipsLeft ?? SKIPS_PER_GAME);
+    setFreezesLeft(data.freezesLeft ?? FREEZES_PER_GAME);
+    setWager(data.wager ?? 1);
+    setEliminatedIdx(data.eliminatedIdx ?? null);
+    badRealWords.current = new Set(data.badRealWords || []);
+    // Re-shuffle pools; the save doesn't snapshot them (it's not important for fairness).
+    realPool.current = shuffle(REAL_WORDS.filter((w) => !badRealWords.current.has(w)));
+    fakePool.current = shuffle(FAKE_WORDS);
+    // Reset transient state.
+    setFrozenActive(false);
+    frozenRef.current = { frozenStartedAt: 0, accumulatedMs: 0 };
+    setLoading(false);
+    setLoadError(false);
+    setInterstitial(null);
+    setPointPops([]);
+    setGameOverReason(null);
+    setScreen('playing');
   }
 
   function endGame(finalScore, reason = null) {
@@ -548,6 +602,8 @@ export default function App() {
       setBestScore(finalScore);
       try { localStorage.setItem(BEST_KEY, String(finalScore)); } catch {}
     }
+    clearSavedGame();
+    setHasSavedGame(false);
     setGameOverReason(reason);
     setScreen('gameover');
     sfx(reason?.kind === 'failed-level' ? 'gameover' : 'mega');
@@ -586,6 +642,29 @@ export default function App() {
     return () => clearInterval(tick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, loading, interstitial, screen, round]);
+
+  // Auto-save mid-game state to localStorage on any meaningful change.
+  // Skips while loading so we don't persist a half-built round.
+  useEffect(() => {
+    if (screen !== 'playing' || !current || loading) return;
+    const data = {
+      version: 1,
+      round, score, streak, results, current, guess,
+      timedOut, skipped,
+      hintsLeft, skipsLeft, freezesLeft,
+      wager, eliminatedIdx,
+      badRealWords: Array.from(badRealWords.current),
+    };
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      if (!hasSavedGame) setHasSavedGame(true);
+    } catch {}
+  }, [
+    screen, current, loading,
+    round, score, streak, results, guess, timedOut, skipped,
+    hintsLeft, skipsLeft, freezesLeft, wager, eliminatedIdx,
+    hasSavedGame,
+  ]);
 
   function handleTimeout() {
     if (guess !== null || !current) return;
@@ -825,7 +904,13 @@ export default function App() {
   if (screen === 'menu') {
     return (
       <>
-        <MenuScreen onStart={startGame} onShowTutorial={openFullGuide} bestScore={bestScore} />
+        <MenuScreen
+          onStart={startGame}
+          onResume={resumeGame}
+          onShowTutorial={openFullGuide}
+          bestScore={bestScore}
+          hasSavedGame={hasSavedGame}
+        />
         {tutorialMode && (
           <TutorialOverlay
             pages={tutorialMode === 'full' ? FULL_TUTORIAL_PAGES : QUICK_TUTORIAL_PAGES}
@@ -1232,7 +1317,7 @@ function TutorialOverlay({ pages, onClose }) {
   );
 }
 
-function MenuScreen({ onStart, onShowTutorial, bestScore }) {
+function MenuScreen({ onStart, onResume, onShowTutorial, bestScore, hasSavedGame }) {
   return (
     <div className="app menu">
       <FloatingWordsBackdrop />
@@ -1255,9 +1340,19 @@ function MenuScreen({ onStart, onShowTutorial, bestScore }) {
       )}
 
       <div className="menu-actions">
-        <button className="btn-cta" onClick={onStart}>
-          <span>PLAY</span>
-          <Icon.ArrowRight width="20" height="20" />
+        {hasSavedGame && (
+          <button className="btn-cta" onClick={onResume} type="button">
+            <span>RESUME</span>
+            <Icon.ArrowRight width="20" height="20" />
+          </button>
+        )}
+        <button
+          className={hasSavedGame ? 'btn-secondary btn-secondary-prom' : 'btn-cta'}
+          onClick={onStart}
+          type="button"
+        >
+          <span>{hasSavedGame ? 'NEW GAME' : 'PLAY'}</span>
+          {!hasSavedGame && <Icon.ArrowRight width="20" height="20" />}
         </button>
         <button className="btn-secondary" onClick={onShowTutorial} type="button">
           <Icon.Bulb width="16" height="16" />
