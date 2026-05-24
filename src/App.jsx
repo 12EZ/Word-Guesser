@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { REAL_WORDS } from './data/realWords';
 import { FAKE_WORDS } from './data/fakeWords';
 import { fetchDefinition } from './api';
+import * as crazygames from './crazygames';
 import './App.css';
 
 // 8 distinct levels, each with its own shape:
@@ -559,6 +560,7 @@ export default function App() {
     setScreen('playing');
     setInterstitial({ type: 'level', level: 0, pending: 1 });
     sfx('start');
+    crazygames.gameplayStart();
   }
 
   function resumeGame() {
@@ -595,6 +597,7 @@ export default function App() {
     setPointPops([]);
     setGameOverReason(null);
     setScreen('playing');
+    crazygames.gameplayStart();
   }
 
   function endGame(finalScore, reason = null) {
@@ -607,6 +610,7 @@ export default function App() {
     setGameOverReason(reason);
     setScreen('gameover');
     sfx(reason?.kind === 'failed-level' ? 'gameover' : 'mega');
+    crazygames.gameplayStop();
   }
 
   function spawnPointPop(amount, label) {
@@ -833,6 +837,8 @@ export default function App() {
       }
       // Passed this level — celebrate.
       sfx('levelup');
+      // Signal CrazyGames that this is a safe moment to schedule a midgame ad.
+      crazygames.happytime();
     }
     if (round >= TOTAL_ROUNDS) {
       endGame(score, { kind: 'completed' });
@@ -849,6 +855,10 @@ export default function App() {
     triggerHint, triggerSkip, triggerFreeze, toggleWager,
     nextRound, dismissInterstitial,
   };
+
+  // Initialize the CrazyGames SDK once on app mount. No-ops if the SDK
+  // isn't loaded (local dev / non-CrazyGames hosting).
+  useEffect(() => { crazygames.init(); }, []);
 
   useEffect(() => {
     function onKey(e) {

@@ -11,6 +11,11 @@
     <meta name="format-detection" content="telephone=no" />
     <meta name="description" content="Word Guesser — real word, or did we make it up?" />
     <title>Word Guesser</title>
+
+    <!-- CrazyGames SDK. Safe to load everywhere — the wrapper in
+         src/crazygames.js no-ops when the SDK isn't available (e.g. on
+         local dev or non-CrazyGames hosting). -->
+    <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
   </head>
   <body>
     <div id="root"></div>
