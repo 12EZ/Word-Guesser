@@ -1452,6 +1452,13 @@ function MenuScreen({ onStart, onResume, onShowTutorial, bestScore, hasSavedGame
           ))}
         </div>
       </div>
+
+      <div className="legal-footer">
+        By playing, you agree to the{' '}
+        <a href="https://www.crazygames.com/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+        {' & '}
+        <a href="https://www.crazygames.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+      </div>
     </div>
   );
 }
