@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400..700&display=swap');
+
+:root {
+  color-scheme: dark;
+
+  --bg-base: #0d0f23;
+  --bg-deep: #07091a;
+  --surface: #181b32;
+  --surface-2: #20243e;
+  --surface-3: #2a2f4d;
+  --border: #2e3354;
+  --border-light: #3a4068;
+
+  --text: #f2f3ff;
+  --text-strong: #ffffff;
+  --text-dim: #9aa0c5;
+  --text-muted: #6b6f95;
+
+  --accent: #ff8a5b;
+  --accent-2: #ffd166;
+  --accent-pink: #ff6b9d;
+
+  --real: #22e6a0;
+  --real-dim: #0e7a5a;
+  --real-bg-a: #0d3a2e;
+  --real-bg-b: #0e4d3c;
+
+  --fake: #ff5b7e;
+  --fake-dim: #b53052;
+  --fake-bg-a: #3d0f1d;
+  --fake-bg-b: #5a1a2d;
+
+  --bonus: #a78bfa;
+  --bonus-2: #ec4899;
+
+  --final: #fbbf24;
+  --final-2: #ff6b6b;
+
+  --shadow-card: 0 30px 60px -20px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  --shadow-lift: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+
+  --font-display: 'Bricolage Grotesque', 'Georgia', serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { min-height: 100%; }
+html { height: 100%; }
+body { min-height: 100dvh; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--text);
+  background-color: var(--bg-deep);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  letter-spacing: -0.01em;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+button, a, [role="button"] { touch-action: manipulation; }
+button { -webkit-tap-highlight-color: transparent; }
+
+@media (hover: none) and (pointer: coarse) {
+  /* Prevent accidental text selection on tap for game UI */
+  .app, .card, .btn-vote, .btn-primary, .btn-cta, .btn-ghost,
+  .btn-secondary, .powerup, .wager-btn, .option, .tutorial-card {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: -10%;
+  z-index: -2;
+  background:
+    radial-gradient(1000px 700px at 15% -5%, rgba(167, 139, 250, 0.28) 0%, transparent 55%),
+    radial-gradient(900px 600px at 85% 105%, rgba(255, 138, 91, 0.22) 0%, transparent 55%),
+    radial-gradient(800px 600px at 50% 55%, rgba(251, 191, 36, 0.10) 0%, transparent 60%),
+    radial-gradient(700px 500px at 50% 40%, rgba(236, 72, 153, 0.13) 0%, transparent 60%),
+    linear-gradient(180deg, #11132a 0%, #07091a 100%);
+  background-size: 200% 200%;
+  animation: bgDrift 22s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+@keyframes bgDrift {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding:
+    calc(28px + env(safe-area-inset-top, 0px))
+    calc(16px + env(safe-area-inset-right, 0px))
+    calc(80px + env(safe-area-inset-bottom, 0px))
+    calc(16px + env(safe-area-inset-left, 0px));
+}
+
+@media (max-width: 600px) {
+  #root {
+    padding:
+      calc(16px + env(safe-area-inset-top, 0px))
+      calc(12px + env(safe-area-inset-right, 0px))
+      calc(28px + env(safe-area-inset-bottom, 0px))
+      calc(12px + env(safe-area-inset-left, 0px));
+  }
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
